@@ -34,11 +34,23 @@ headers = {
 # Определяем состояния для диалога
 ENTER_MOVIE = 0
 
-
 async def start(update, context):
+    """
+    Стартовая клавиатура. Четыре кнопки и приветствие.
+    Каждая кнопка перехватывается отдельным MessageHandler
+    """
+    keyboard = ReplyKeyboardMarkup([
+        ['Find Movie', 'Random Movie'], ['Favorite Movies', 'Movie for later']
+    ], resize_keyboard=True)
+    await update.message.reply_text(
+        "Привет! Давай начнем. Что я могу для тебя сделать?",
+        reply_markup=keyboard
+    )
+
+async def start_movie_search(update, context):
     """Начало разговора."""
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("Найти", callback_data="ask_movie_name")]
+        [InlineKeyboardButton("Find Movie", callback_data="ask_movie_name")]
     ])
     await update.message.reply_text(
         "Привет! Давай начнем. Я помогу найти тебе фильм.",
@@ -80,12 +92,15 @@ async def save_movie_name(update, context):
     # Завершаем разговор
     return ConversationHandler.END
 
-    # Завершаем разговор
-    return ConversationHandler.END
-
 
 async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Извините, я не понимаю эту команду.")
+    keyboard = ReplyKeyboardMarkup([
+        ['Find Movie', 'Random Movie'], ['Favorite Movies', 'Movie for later']
+    ], resize_keyboard=True)
+    await update.message.reply_text(
+        f'Извини, я не умею отвечать на такой запрос :(\nДавай попробуем ещё раз. Что я могу для тебя сделать?',
+        reply_markup=keyboard
+    )
 
 
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -97,9 +112,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TG_TOKEN).build()
     start_handler = CommandHandler('start', start)
-    unknown_handler = MessageHandler(filters.COMMAND, unknown)
+    start_movie_search_handler = MessageHandler(filters.Regex(r'^Find Movie$'), start_movie_search)
+    unknown_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), unknown)
     conversation_handler = ConversationHandler(
-        entry_points=[start_handler],  # Теперь начало разговора - это вызов команды /start
+        entry_points=[start_movie_search_handler],
         states={
             ENTER_MOVIE: [MessageHandler(filters.TEXT & (~filters.COMMAND), save_movie_name)]
         },
@@ -108,7 +124,9 @@ if __name__ == '__main__':
 
     application.add_handler(conversation_handler)
     application.add_handler(start_handler)
+    application.add_handler(start_movie_search_handler)
     application.add_handler(unknown_handler)
     application.add_handler(CallbackQueryHandler(button))
+
 
     application.run_polling()
