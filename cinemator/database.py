@@ -1,5 +1,7 @@
 import sqlite3
 
+#TODO: создать реальные таблицы для бота
+
 __connection = None
 
 def ensure_connection(func):
