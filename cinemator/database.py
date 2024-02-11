@@ -1,6 +1,7 @@
 import sqlite3
 
-#TODO: создать реальные таблицы для бота
+#TODO: создать реальные таблицы для бота -------------------- СДЕЛАНО
+#TODO: создать методы для записи данных в таблицы
 
 __connection = None
 
@@ -22,10 +23,14 @@ def init_db(conn, force: bool = False):
 
     c = conn.cursor()
 
-    # TODO: Добавить таблицы с инфо о пользователе и другие
 
     if force:
-        c.execute('DROP TABLE IF EXISTS user_movies')
+        c.execute('DROP TABLE IF EXISTS user_message')
+        c.execute('DROP TABLE IF EXISTS users')
+        c.execute('DROP TABLE IF EXISTS favorite_movies')
+        c.execute('DROP TABLE IF EXISTS movies_to_watch')
+        c.execute('DROP TABLE IF EXISTS user_favorite_movies')
+        c.execute('DROP TABLE IF EXISTS user_movies_to_watch')
 
     c.execute('''
         CREATE TABLE IF NOT EXISTS user_message (
@@ -34,6 +39,57 @@ def init_db(conn, force: bool = False):
             text TEXT NOT NULL
         )
 ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            username TEXT NOT NULL,
+            chat_id INTEGER NOT NULL
+        )
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS favorite_movies (
+            movie_id INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            year INTEGER NOT NULL,
+            genre TEXT NOT NULL,
+            rating INTEGER NOT NULL
+        )
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS movies_to_watch (
+            movie_id INTEGER PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            year INTEGER NOT NULL,
+            genre TEXT NOT NULL,
+            rating INTEGER NOT NULL
+        )
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS user_favorite_movies (
+            user_id INTEGER,
+            movie_id INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users(user_id),
+            FOREIGN KEY (movie_id) REFERENCES favorite_movies(movie_id),
+            PRIMARY KEY (user_id, movie_id)
+        )
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS user_movies_to_watch (
+            user_id INTEGER,
+            movie_id INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users(user_id),
+            FOREIGN KEY (movie_id) REFERENCES movies_to_watch(movie_id),
+            PRIMARY KEY (user_id, movie_id)
+        )
+    ''')
+
 
     conn.commit()
 
