@@ -1467,46 +1467,195 @@
     <argument id="517" parent="176">
       <Position>1</Position>
     </argument>
-    <table id="518" parent="177" name="sqlite_master">
+    <table id="518" parent="177" name="favorite_movies"/>
+    <table id="519" parent="177" name="movies_to_watch"/>
+    <table id="520" parent="177" name="sqlite_master">
       <System>1</System>
     </table>
-    <table id="519" parent="177" name="user_message"/>
-    <column id="520" parent="518" name="type">
+    <table id="521" parent="177" name="user_favorite_movies"/>
+    <table id="522" parent="177" name="user_message"/>
+    <table id="523" parent="177" name="user_movies_to_watch"/>
+    <table id="524" parent="177" name="users"/>
+    <column id="525" parent="518" name="movie_id">
+      <DasType>INTEGER|0s</DasType>
+      <Position>1</Position>
+    </column>
+    <column id="526" parent="518" name="title">
+      <DasType>TEXT|0s</DasType>
+      <NotNull>1</NotNull>
+      <Position>2</Position>
+    </column>
+    <column id="527" parent="518" name="description">
+      <DasType>TEXT|0s</DasType>
+      <DefaultExpression>&apos;Description of the movie is missing&apos;</DefaultExpression>
+      <Position>3</Position>
+    </column>
+    <column id="528" parent="518" name="year">
+      <DasType>INTEGER|0s</DasType>
+      <DefaultExpression>&apos;No information about year&apos;</DefaultExpression>
+      <Position>4</Position>
+    </column>
+    <column id="529" parent="518" name="genre">
+      <DasType>TEXT|0s</DasType>
+      <DefaultExpression>&apos;No information about genre&apos;</DefaultExpression>
+      <Position>5</Position>
+    </column>
+    <column id="530" parent="518" name="rating">
+      <DasType>INTEGER|0s</DasType>
+      <DefaultExpression>&apos;No information about rating&apos;</DefaultExpression>
+      <Position>6</Position>
+    </column>
+    <key id="531" parent="518">
+      <ColNames>movie_id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <column id="532" parent="519" name="movie_id">
+      <DasType>INTEGER|0s</DasType>
+      <Position>1</Position>
+    </column>
+    <column id="533" parent="519" name="title">
+      <DasType>TEXT|0s</DasType>
+      <NotNull>1</NotNull>
+      <Position>2</Position>
+    </column>
+    <column id="534" parent="519" name="description">
+      <DasType>TEXT|0s</DasType>
+      <DefaultExpression>&apos;Description of the movie is missing&apos;</DefaultExpression>
+      <Position>3</Position>
+    </column>
+    <column id="535" parent="519" name="year">
+      <DasType>INTEGER|0s</DasType>
+      <DefaultExpression>0</DefaultExpression>
+      <Position>4</Position>
+    </column>
+    <column id="536" parent="519" name="genre">
+      <DasType>TEXT|0s</DasType>
+      <DefaultExpression>&apos;No information about genre&apos;</DefaultExpression>
+      <Position>5</Position>
+    </column>
+    <column id="537" parent="519" name="rating">
+      <DasType>INTEGER|0s</DasType>
+      <DefaultExpression>0</DefaultExpression>
+      <Position>6</Position>
+    </column>
+    <key id="538" parent="519">
+      <ColNames>movie_id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <column id="539" parent="520" name="type">
       <DasType>TEXT|0s</DasType>
       <Position>1</Position>
     </column>
-    <column id="521" parent="518" name="name">
+    <column id="540" parent="520" name="name">
       <DasType>TEXT|0s</DasType>
       <Position>2</Position>
     </column>
-    <column id="522" parent="518" name="tbl_name">
+    <column id="541" parent="520" name="tbl_name">
       <DasType>TEXT|0s</DasType>
       <Position>3</Position>
     </column>
-    <column id="523" parent="518" name="rootpage">
+    <column id="542" parent="520" name="rootpage">
       <DasType>INT|0s</DasType>
       <Position>4</Position>
     </column>
-    <column id="524" parent="518" name="sql">
+    <column id="543" parent="520" name="sql">
       <DasType>TEXT|0s</DasType>
       <Position>5</Position>
     </column>
-    <column id="525" parent="519" name="id">
+    <column id="544" parent="521" name="user_id">
       <DasType>INTEGER|0s</DasType>
       <Position>1</Position>
     </column>
-    <column id="526" parent="519" name="user_id">
+    <column id="545" parent="521" name="movie_id">
+      <DasType>INTEGER|0s</DasType>
+      <Position>2</Position>
+    </column>
+    <foreign-key id="546" parent="521">
+      <ColNames>user_id</ColNames>
+      <RefColNames>user_id</RefColNames>
+      <RefTableName>users</RefTableName>
+    </foreign-key>
+    <foreign-key id="547" parent="521">
+      <ColNames>movie_id</ColNames>
+      <RefColNames>movie_id</RefColNames>
+      <RefTableName>favorite_movies</RefTableName>
+    </foreign-key>
+    <index id="548" parent="521" name="sqlite_autoindex_user_favorite_movies_1">
+      <ColNames>user_id
+movie_id</ColNames>
+      <NameSurrogate>1</NameSurrogate>
+      <Unique>1</Unique>
+    </index>
+    <key id="549" parent="521">
+      <ColNames>user_id
+movie_id</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_user_favorite_movies_1</UnderlyingIndexName>
+    </key>
+    <column id="550" parent="522" name="id">
+      <DasType>INTEGER|0s</DasType>
+      <Position>1</Position>
+    </column>
+    <column id="551" parent="522" name="user_id">
       <DasType>INTEGER|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
     </column>
-    <column id="527" parent="519" name="text">
+    <column id="552" parent="522" name="text">
       <DasType>TEXT|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
     </column>
-    <key id="528" parent="519">
+    <key id="553" parent="522">
       <ColNames>id</ColNames>
+      <Primary>1</Primary>
+    </key>
+    <column id="554" parent="523" name="user_id">
+      <DasType>INTEGER|0s</DasType>
+      <Position>1</Position>
+    </column>
+    <column id="555" parent="523" name="movie_id">
+      <DasType>INTEGER|0s</DasType>
+      <Position>2</Position>
+    </column>
+    <foreign-key id="556" parent="523">
+      <ColNames>user_id</ColNames>
+      <RefColNames>user_id</RefColNames>
+      <RefTableName>users</RefTableName>
+    </foreign-key>
+    <foreign-key id="557" parent="523">
+      <ColNames>movie_id</ColNames>
+      <RefColNames>movie_id</RefColNames>
+      <RefTableName>movies_to_watch</RefTableName>
+    </foreign-key>
+    <index id="558" parent="523" name="sqlite_autoindex_user_movies_to_watch_1">
+      <ColNames>user_id
+movie_id</ColNames>
+      <NameSurrogate>1</NameSurrogate>
+      <Unique>1</Unique>
+    </index>
+    <key id="559" parent="523">
+      <ColNames>user_id
+movie_id</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_user_movies_to_watch_1</UnderlyingIndexName>
+    </key>
+    <column id="560" parent="524" name="user_id">
+      <DasType>INTEGER|0s</DasType>
+      <Position>1</Position>
+    </column>
+    <column id="561" parent="524" name="username">
+      <DasType>TEXT|0s</DasType>
+      <NotNull>1</NotNull>
+      <Position>2</Position>
+    </column>
+    <column id="562" parent="524" name="chat_id">
+      <DasType>INTEGER|0s</DasType>
+      <NotNull>1</NotNull>
+      <Position>3</Position>
+    </column>
+    <key id="563" parent="524">
+      <ColNames>user_id</ColNames>
       <Primary>1</Primary>
     </key>
   </database-model>
