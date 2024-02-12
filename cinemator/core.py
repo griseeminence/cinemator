@@ -98,23 +98,18 @@ async def random_movie(update, context):
 
 # TODO: Favorite Movie BLOCK
 async def favorite_movie(update, context):
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text=f'Здесь будет список любимых фильмов. Но меня ещё не подключили к БД :(')
-
-
+    user = update.effective_user
+    movie_list = get_favorite_movies(user_id=user.id)
+    formatted_movie_list = "\n\n".join([f"{movie[0]}\n{movie[1]}\n{movie[2]}" for movie in movie_list])
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=formatted_movie_list)
 # TODO: END Favorite Movie BLOCK
 
 # TODO: Movie to watch BLOCK
 async def movie_to_watch(update, context):
     user = update.effective_user
-    query = update.callback_query
-    messages = 'ssdqdqdqdqdqwd'
-    text = '\n\n'.join([f'#{message_id} - {message_text}' for message_id, message_text in messages])
-    await update.effective_message.reply_text(text=text)
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text=f'Я всё ещё работаю неправильно, но меня уже подключили к базе данных!')
-
-
+    movie_list = get_movies_to_watch(user_id=user.id)
+    formatted_movie_list = "\n\n".join([f"{movie[0]}\n{movie[1]}\n{movie[2]}" for movie in movie_list])
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=formatted_movie_list)
 # TODO: END Movie to watch BLOCK
 
 
@@ -172,8 +167,8 @@ async def save_movie_name(update, context):
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton("Save to Favorite Movie", callback_data="add_favorite_movie")],
-            [InlineKeyboardButton("Save to Movie to watch", callback_data="add_movie_to_watch")],
+            [InlineKeyboardButton("Save to Favorite Movie", callback_data="add_to_list_favorite_movie")],
+            [InlineKeyboardButton("Save to Movie to watch", callback_data="add_to_list_movie_to_watch")],
             [InlineKeyboardButton("Menu", callback_data="start")],
         ],
     )
@@ -188,9 +183,19 @@ async def add_to_lists(update, context):
     user = update.effective_user
     query = update.callback_query
 
-    if query.data == "add_favorite_movie":
-        await query.message.reply_text('Кнопку "Save to Favorite Movie" нажали. Функция favorite_movie еще не реализована.')
-    elif query.data == "add_movie_to_watch":
+    if query.data == "add_to_list_favorite_movie":
+        movie_info = context.user_data.get('movie_info')
+        if movie_info:
+            add_favorite_movie(
+                user_id=user.id,
+                title=movie_info['name'],
+                description=movie_info['description'],
+                year=movie_info['year'],
+                genre=movie_info['genres'],
+                rating=movie_info['rating']
+            )
+        await query.message.reply_text(f'Movie {movie_info["name"]} successfully added to favorites!')
+    elif query.data == "add_to_list_movie_to_watch":
         movie_info = context.user_data.get('movie_info')
         if movie_info:
             add_movie_to_watch(
@@ -201,15 +206,10 @@ async def add_to_lists(update, context):
                 genre=movie_info['genres'],
                 rating=movie_info['rating']
             )
-        movie_list = get_movies_to_watch(user_id=user.id)
-
-        # Преобразование списка фильмов в текст
-        formatted_movie_list = "\n\n".join([f"{movie[0]}\n{movie[1]}\n{movie[2]}" for movie in movie_list])
-
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=formatted_movie_list)
-
+        await query.message.reply_text(f'Movie {movie_info["name"]} successfully added to Movie to watch list!')
+#TODO: не работает вызов start
     else:
-        await query.message.reply_text('Кнопку вижу. Жду, пока мне дадут функцию start')
+        await start(update, context)
 
     # Завершаем разговор
     return ConversationHandler.END
@@ -246,6 +246,8 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await ask_movie_name(update, context)
     elif query.data == "movie_to_watch":
         await movie_to_watch(update, context)
+    elif query.data == "favorite_movie":
+        await favorite_movie(update, context)
 
 
 
