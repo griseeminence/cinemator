@@ -33,7 +33,6 @@ init_db()
 
 # Определяем состояния для диалога
 ENTER_MOVIE = 0
-ADD_TO_LISTS = 1
 
 
 # Отдельный декоратора для логгирования
@@ -69,7 +68,12 @@ async def start(update, context):
     Стартовая клавиатура. Четыре кнопки и приветствие.
     Каждая кнопка перехватывается отдельным обработчиком MessageHandler
     """
-    keyboard = get_keyboard()
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Find Movie", callback_data="ask_movie_name")],
+        [InlineKeyboardButton("Random Movie", callback_data="random_movie")],
+        [InlineKeyboardButton("Favorite Movie", callback_data="favorite_movie")],
+        [InlineKeyboardButton("Movie to watch", callback_data="movie_to_watch")],
+    ])
     await update.message.reply_text(
         "Привет! Давай начнем. Что я могу для тебя сделать?",
         reply_markup=keyboard
@@ -124,7 +128,7 @@ async def start_movie_search(update, context):
     # Определяем состояние ввода имени фильма
     context.user_data['state'] = ENTER_MOVIE
     await update.callback_query.message.reply_text(
-        "1Как называется фильм, который тебя интересует?"
+        "Как называется фильм, который тебя интересует?"
     )
     return ENTER_MOVIE
 
@@ -133,7 +137,7 @@ async def start_movie_search(update, context):
 
 async def ask_movie_name(update, context):
     """Задаем вопрос о имени."""
-    await update.callback_query.message.reply_text("2Как называется фильм, который тебя интересует?")
+    await update.callback_query.message.reply_text("Как называется фильм, который тебя интересует?")
 
     # Ожидаем ответ пользователя
     return ENTER_MOVIE
@@ -153,63 +157,13 @@ async def save_movie_name(update, context):
 
     url_name_search = f'https://api.kinopoisk.dev/v1.4/movie/search?page=1&limit=10&query={movie_for_search}'
     name = requests.get(url_name_search, headers=headers).json()['docs'][0]['name']
-    genres = requests.get(url_name_search, headers=headers).json()['docs'][0]['genres'][0]['name']
     id = requests.get(url_name_search, headers=headers).json()['docs'][0]['id']
     year = requests.get(url_name_search, headers=headers).json()['docs'][0]['year']
     description = requests.get(url_name_search, headers=headers).json()['docs'][0]['description']
     poster = requests.get(url_name_search, headers=headers).json()['docs'][0]['poster']
     rating = requests.get(url_name_search, headers=headers).json()['docs'][0]['rating']['kp']
-    message_text = f'{name}\n{year}\n{description}\n{rating}\n{poster}\n{genres}'
+    message_text = f'{name}\n{year}\n{description}\n{rating}\n{poster}'
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message_text)
-
-    context.user_data['movie_info'] = {
-        'name': name,
-        'description': description,
-        'year': year,
-        'genres': genres,
-        'rating': rating
-    }
-
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton("Save to Favorite Movie", callback_data="add_favorite_movie")],
-            [InlineKeyboardButton("Save to Movie to watch", callback_data="add_movie_to_watch")],
-            [InlineKeyboardButton("Menu", callback_data="start")],
-        ],
-    )
-    await update.message.reply_text(
-        "Хочешь сохранить фильм?",
-        reply_markup=keyboard
-    )
-
-    return ADD_TO_LISTS
-
-async def add_to_lists(update, context):
-    user = update.effective_user
-    query = update.callback_query
-
-    if query.data == "add_favorite_movie":
-        await query.message.reply_text('Кнопку "Save to Favorite Movie" нажали. Функция favorite_movie еще не реализована.')
-    elif query.data == "add_movie_to_watch":
-        movie_info = context.user_data.get('movie_info')
-        if movie_info:
-            add_movie_to_watch(
-                user_id=user.id,
-                title=movie_info['name'],
-                description=movie_info['description'],
-                year=movie_info['year'],
-                genre=movie_info['genres'],
-                rating=movie_info['rating']
-            )
-        movie_list = get_movies_to_watch(user_id=user.id)
-
-        # Преобразование списка фильмов в текст
-        formatted_movie_list = "\n\n".join([f"{movie[0]}\n{movie[1]}\n{movie[2]}" for movie in movie_list])
-
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=formatted_movie_list)
-
-    else:
-        await query.message.reply_text('Кнопку вижу. Жду, пока мне дадут функцию start')
 
     # Завершаем разговор
     return ConversationHandler.END
@@ -258,8 +212,7 @@ if __name__ == '__main__':
     conversation_handler = ConversationHandler(
         entry_points=[start_movie_search_handler],
         states={
-            ENTER_MOVIE: [MessageHandler(filters.TEXT & (~filters.COMMAND), save_movie_name)],
-            ADD_TO_LISTS: [CallbackQueryHandler(add_to_lists)]
+            ENTER_MOVIE: [MessageHandler(filters.TEXT & (~filters.COMMAND), save_movie_name)]
         },
         fallbacks=[],
     )
