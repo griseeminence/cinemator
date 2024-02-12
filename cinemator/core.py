@@ -2,17 +2,13 @@ import logging
 import requests
 
 from dotenv import dotenv_values
-from telegram import Update, InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardButton, \
-    InlineKeyboardMarkup, ReplyKeyboardMarkup
-from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes, InlineQueryHandler, \
-    CallbackQueryHandler, ConversationHandler, CallbackContext
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler, ConversationHandler
 
-from cinemator.database import init_db, add_message, list_messages
+from cinemator.database import init_db, get_movies_to_watch, get_favorite_movies, add_movie_to_watch, add_favorite_movie
 
-# Загрузить переменные среды из файла .env
 env_variables = dotenv_values(".env")
 
-# Получить значение конкретной переменной
 TG_TOKEN = env_variables.get("TG_TOKEN")
 KINOPOISK_TOKEN = env_variables.get("KINOPOISK_TOKEN")
 
@@ -119,7 +115,7 @@ async def favorite_movie(update, context):
 async def movie_to_watch(update, context):
     user = update.effective_user
     query = update.callback_query
-    messages = list_messages(user_id=user.id, limit=10)
+    messages = 'ssdqdqdqdqdqwd'
     text = '\n\n'.join([f'#{message_id} - {message_text}' for message_id, message_text in messages])
     await update.effective_message.reply_text(text=text)
     # await context.bot.send_message(chat_id=update.effective_chat.id,
@@ -134,14 +130,14 @@ async def movie_to_watch(update, context):
 # TODO: Find Movie BLOCK
 async def start_movie_search(update, context):
     """Начало разговора."""
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("Find Movie", callback_data="ask_movie_name")]
-    ])
-    await update.message.reply_text(
-        "Привет! Давай начнем. Я помогу найти тебе фильм.",
-        reply_markup=keyboard
+    # Определяем состояние ввода имени фильма
+    context.user_data['state'] = ENTER_MOVIE
+    await update.callback_query.message.reply_text(
+        "Как называется фильм, который тебя интересует?"
     )
-    return ENTER_MOVIE  # Переходим в состояние ENTER_MOVIE
+    return ENTER_MOVIE
+
+
 
 
 async def ask_movie_name(update, context):
@@ -189,12 +185,9 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         name = 'Anonym'
     text = update.effective_message.text
-    if text:
-        add_message(user_id=user.id, text=text)
 
-    keyboard = ReplyKeyboardMarkup([
-        ['Find Movie', 'Random Movie'], ['Favorite Movies', 'Movie for later']
-    ], resize_keyboard=True)
+
+    keyboard = get_keyboard()
     await update.message.reply_text(
         f'Извини, я не умею отвечать на такой запрос :(\nДавай попробуем ещё раз. Что я могу для тебя сделать?',
         reply_markup=keyboard  # TODO: вот сюда можно вставить отдельную функцию get_keyboard, чтобы не дублировать код.
@@ -220,18 +213,22 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TG_TOKEN).build()
     start_handler = CommandHandler('start', start)
-    start_movie_search_handler = MessageHandler(filters.Regex(r'^Find Movie$'), start_movie_search)
-    random_movie_handler = CallbackQueryHandler(random_movie, pattern=r'^random_movie$')
-    favorite_movie_handler = CallbackQueryHandler(favorite_movie, pattern=r'^favorite_movie$')
-    movie_to_watch_handler = CallbackQueryHandler(movie_to_watch, pattern=r'^movie_to_watch$')
-    unknown_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), unknown)
+    # start_movie_search_handler = CallbackQueryHandler(start_movie_search, pattern=r'^Find Movie$')
+    start_movie_search_handler = CallbackQueryHandler(start_movie_search, pattern=r'^ask_movie_name$')
     conversation_handler = ConversationHandler(
         entry_points=[start_movie_search_handler],
         states={
             ENTER_MOVIE: [MessageHandler(filters.TEXT & (~filters.COMMAND), save_movie_name)]
         },
-        fallbacks=[]
+        fallbacks=[],
     )
+    random_movie_handler = CallbackQueryHandler(random_movie, pattern=r'^random_movie$')
+    favorite_movie_handler = CallbackQueryHandler(favorite_movie, pattern=r'^favorite_movie$')
+    movie_to_watch_handler = CallbackQueryHandler(movie_to_watch, pattern=r'^movie_to_watch$')
+
+
+    unknown_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), unknown)
+
 
     application.add_handler(conversation_handler)
     application.add_handler(start_handler)
