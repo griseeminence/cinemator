@@ -220,6 +220,7 @@ async def add_to_lists(update, context):
 # TODO: UNKNOWN BLOCK
 async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Ниже - код для теста: сохраняет в БД отправленное пользователем сообщение
+    # Ниже - код для теста: сохраняет в БД отправленное пользователем сообщение
     user = update.effective_user
     if user:
         name = user.first_name
