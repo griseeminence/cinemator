@@ -159,14 +159,16 @@ def add_favorite_movie(conn, user_id, title, description, year, genre, rating):
 
 
 @ensure_connection
-def get_movies_to_watch(conn, user_id):
+def get_movies_to_watch(conn, user_id, limit=1, offset=0):
     c = conn.cursor()
     c.execute('''
         SELECT m.title, m.description, m.year, m.genre, m.rating
         FROM movies_to_watch m
         INNER JOIN user_movies_to_watch um ON m.movie_id = um.movie_id
         WHERE um.user_id = ?
-    ''', (user_id,))
+        LIMIT ?
+        OFFSET ?
+    ''', (user_id, limit, offset))
     return c.fetchall()
 
 
@@ -219,7 +221,6 @@ if __name__ == '__main__':
     test_favorite_movie = get_favorite_movies(user_id=123456)
     for i in test_favorite_movie:
         print(*i)
-
 
     add_movie_to_watch(
         user_id=123456,

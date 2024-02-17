@@ -150,11 +150,39 @@ async def favorite_movie(update, context):
 # TODO: END Favorite Movie BLOCK
 
 # TODO: Movie to watch BLOCK
-async def movie_to_watch(update, context):
+async def movie_to_watch(update, context, page_number=1):
+    print(f' page_number = {page_number}')
     user = update.effective_user
-    movie_list = get_movies_to_watch(user_id=user.id)
+    limit = 5
+    if page_number == 1:
+        offset = 0
+    elif page_number > 1:
+        offset = (page_number - 1) * limit
+    print(f'offset = {offset}')
+    print(get_movies_to_watch(user_id=user.id))
+    print(get_movies_to_watch(user_id=user.id, limit=5, offset=0))
+    print(get_movies_to_watch(user_id=user.id, limit=5, offset=5))
+    movie_list = get_movies_to_watch(user_id=user.id, limit=limit, offset=offset)
+
+    if not movie_list:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Список фильмов пуст.")
+        return
+
     formatted_movie_list = "\n\n".join([f"{movie[0]}\n{movie[1]}\n{movie[2]}" for movie in movie_list])
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=formatted_movie_list)
+
+    next_page_button = InlineKeyboardButton(
+        text="Следующая страница",
+        callback_data=f"next_page_{page_number + 1}"  # Увеличиваем номер страницы для следующей кнопки
+    )
+
+    keyboard = [[next_page_button]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=formatted_movie_list,
+        reply_markup=reply_markup
+    )
 
 
 # TODO: END Movie to watch BLOCK
@@ -272,6 +300,14 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await movie_to_watch(update, context)
     elif query.data == "favorite_movie":
         await favorite_movie(update, context)
+    elif query.data.startswith("next_page"):
+        print(f'query_data = {query.data}')
+        page_number = int(query.data.split('_')[-1])  # Извлекаем номер страницы из коллбэк данных
+        print(f'before_page_number_button = {page_number}')
+        #TODO: Здесь была пагинация в аргументах page_number+1, однако передавался сюда аргумент с уже добавленным числом
+        #TODO: Не понимаю, на каком этапе он его плюсует - разобраться. В любом случае -пагинация работает.
+        await movie_to_watch(update, context, page_number)
+        print(f'after_page_number_button = {page_number}')
 # TODO: END BUTTONS BLOCK
 
 if __name__ == '__main__':
@@ -310,3 +346,5 @@ if __name__ == '__main__':
     application.add_handler(CallbackQueryHandler(button))
 
     application.run_polling()
+
+
