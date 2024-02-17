@@ -69,11 +69,27 @@ async def start(update, context):
     Стартовая клавиатура. Четыре кнопки и приветствие.
     Каждая кнопка перехватывается отдельным обработчиком MessageHandler
     """
-    keyboard = get_keyboard()
-    await update.message.reply_text(
-        "Привет! Давай начнем. Что я могу для тебя сделать?",
-        reply_markup=keyboard
-    )
+    print(f'Запустил функцию старт')
+    print(update)
+    print(context)
+    if update.message:
+        keyboard = get_keyboard()
+        await update.message.reply_text(
+            "Привет! Давай начнем. Что я могу для тебя сделать?",
+            reply_markup=keyboard
+        )
+    elif update.callback_query:
+        data = update.callback_query.data
+        if data == "start":
+            keyboard = get_keyboard()
+            await update.callback_query.message.reply_text(
+                "Привет! Давай начнем. Что я могу для тебя сделать?",
+                reply_markup=keyboard
+            )
+        # Добавьте обработку других данных коллбэка здесь
+    else:
+        print("Обновление не содержит ни сообщения, ни данных коллбэка.")
+    print(f'вышел из функции старт')
 
 
 # TODO: Random Movie BLOCK
