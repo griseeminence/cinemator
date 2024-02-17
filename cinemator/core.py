@@ -99,15 +99,8 @@ async def random_movie(update, context):
     # TODO: Выдаёт рандомный тайтл. У фильмов часто пустые поля. Придумать, как фильтровать рандом по списку топ-250
 
     # url_random_250 = 'https://api.kinopoisk.dev/v1.4/movie?page=1&limit=250&selectFields=id&selectFields=top250&sortField=top250&sortType=-1'
-    url_random_250 = 'https://api.kinopoisk.dev/v1.4/movie?page=1&limit=250&selectFields=id&selectFields=top250&selectFields=name&selectFields=description&selectFields=year&selectFields=rating&selectFields=poster&selectFields=genres&sortField=top250&sortType=-1'
-    response = requests.get(url_random_250, headers=headers).json()['docs']
-    id_with_250 = []
-    for movie in response:
-        if isinstance(movie['top250'], int):  # Проверяем, является ли значение целым числом
-            id_with_250.append(movie['id'])  # Если да, добавляем id в список
-    test_id = id_with_250
-    print(test_id)
-    print(len(test_id))
+    # url_random_250 = 'https://api.kinopoisk.dev/v1.4/movie?page=1&limit=250&selectFields=id&selectFields=top250&selectFields=name&selectFields=description&selectFields=year&selectFields=rating&selectFields=poster&selectFields=genres&sortField=top250&sortType=-1'
+    url_random_250 = 'https://api.kinopoisk.dev/v1.4/movie?page=1&limit=250&selectFields=id&selectFields=top250&selectFields=name&selectFields=description&selectFields=year&selectFields=rating&selectFields=poster&selectFields=genres&selectFields=type&sortField=top250&sortType=-1&type=movie'
     random_250 = random.randrange(0, 250)
 
     name = requests.get(url_random_250, headers=headers).json()['docs'][random_250]['name']
@@ -193,9 +186,9 @@ async def save_movie_name(update, context):
     id = requests.get(url_name_search, headers=headers).json()['docs'][0]['id']
     year = requests.get(url_name_search, headers=headers).json()['docs'][0]['year']
     description = requests.get(url_name_search, headers=headers).json()['docs'][0]['description']
-    poster = requests.get(url_name_search, headers=headers).json()['docs'][0]['poster']
+    poster = requests.get(url_name_search, headers=headers).json()['docs'][0]['poster']['url']
     rating = requests.get(url_name_search, headers=headers).json()['docs'][0]['rating']['kp']
-    message_text = f'{name}\n{year}\n{description}\n{rating}\n{poster}\n{genres}'
+    message_text = f'Название: {name}\nГод: {year}\nОписание: {description}\nРейтинг: {rating}\nЖанр: {genres}\nПостер: {poster}'
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message_text)
 
     context.user_data['movie_info'] = {
@@ -275,14 +268,10 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка нажатий на кнопки."""
     query = update.callback_query
-    # if query.data == "ask_movie_name":
-    #     await ask_movie_name(update, context)
     if query.data == "movie_to_watch":
         await movie_to_watch(update, context)
     elif query.data == "favorite_movie":
         await favorite_movie(update, context)
-
-
 # TODO: END BUTTONS BLOCK
 
 if __name__ == '__main__':
