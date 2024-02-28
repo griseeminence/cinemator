@@ -306,6 +306,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(f'before_page_number_button = {page_number}')
         #TODO: Здесь была пагинация в аргументах page_number+1, однако передавался сюда аргумент с уже добавленным числом
         #TODO: Не понимаю, на каком этапе он его плюсует - разобраться. В любом случае -пагинация работает.
+        #TODO: добавить пагинацию ко второй функции
         await movie_to_watch(update, context, page_number)
         print(f'after_page_number_button = {page_number}')
 # TODO: END BUTTONS BLOCK
