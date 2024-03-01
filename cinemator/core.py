@@ -140,12 +140,51 @@ async def random_movie(update, context):
 
 
 # TODO: Favorite Movie BLOCK
-async def favorite_movie(update, context):
+async def favorite_movie(update, context, page_number=1):
+    print(f' page_number = {page_number}')
     user = update.effective_user
-    movie_list = get_favorite_movies(user_id=user.id)
-    formatted_movie_list = "\n\n".join([f"{movie[0]}\n{movie[1]}\n{movie[2]}" for movie in movie_list])
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=formatted_movie_list)
+    limit = 5
+    if page_number == 1:
+        offset = 0
+    elif page_number > 1:
+        offset = (page_number - 1) * limit
+    print(f'offset = {offset}')
+    print(get_favorite_movies(user_id=user.id))
+    print(get_favorite_movies(user_id=user.id, limit=5, offset=0))
+    print(get_favorite_movies(user_id=user.id, limit=5, offset=5))
+    movie_list = get_favorite_movies(user_id=user.id, limit=limit, offset=offset)
 
+    if not movie_list:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Список фильмов пуст.")
+        return
+
+    formatted_movie_list = "\n\n".join([f"{movie[0]}\n{movie[1]}\n{movie[2]}" for movie in movie_list])
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="Следующая страница",
+                callback_data=f"next_favorite_page_{page_number + 1}"  # Увеличиваем номер страницы для следующей кнопки
+            )],
+            [InlineKeyboardButton(
+                text="Предыдущая страница",
+                callback_data=f"prev_favorite_page_{page_number - 1}"  # Увеличиваем номер страницы для следующей кнопки
+            )],
+        ],
+    )
+
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=formatted_movie_list,
+        reply_markup=keyboard
+    )
+
+    #TODO:  старый код, удалить если актуальный работает без ошибок
+    # #
+    # movie_list = get_favorite_movies(user_id=user.id)
+    # formatted_movie_list = "\n\n".join([f"{movie[0]}\n{movie[1]}\n{movie[2]}" for movie in movie_list])
+    # await context.bot.send_message(chat_id=update.effective_chat.id, text=formatted_movie_list)
+    # #
 
 # TODO: END Favorite Movie BLOCK
 
@@ -174,11 +213,11 @@ async def movie_to_watch(update, context, page_number=1):
         inline_keyboard=[
             [InlineKeyboardButton(
                 text="Следующая страница",
-                callback_data=f"next_page_{page_number + 1}"  # Увеличиваем номер страницы для следующей кнопки
+                callback_data=f"next_watch_page_{page_number + 1}"  # Увеличиваем номер страницы для следующей кнопки
             )],
             [InlineKeyboardButton(
                 text="Предыдущая страница",
-                callback_data=f"prev_page_{page_number - 1}"  # Увеличиваем номер страницы для следующей кнопки
+                callback_data=f"prev_watch_page_{page_number - 1}"  # Увеличиваем номер страницы для следующей кнопки
             )],
         ],
     )
@@ -305,7 +344,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await movie_to_watch(update, context)
     elif query.data == "favorite_movie":
         await favorite_movie(update, context)
-    elif query.data.startswith("next_page"):
+    elif query.data.startswith("next_watch_page"):
         print(f'query_data = {query.data}')
         page_number = int(query.data.split('_')[-1])  # Извлекаем номер страницы из коллбэк данных
         print(f'before_next_page_number_button = {page_number}')
@@ -314,11 +353,26 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # TODO: добавить пагинацию ко второй функции
         await movie_to_watch(update, context, page_number)
         print(f'after_page_number_button = {page_number}')
-    elif query.data.startswith('prev_page'):
+    elif query.data.startswith('prev_watch_page'):
         print(f'query_data = {query.data}')
         page_number = int(query.data.split('_')[-1])
         print(f'before_prev_page_number_button = {page_number}')
         await movie_to_watch(update, context, page_number)
+        print(f'after_page_number_button = {page_number}')
+    elif query.data.startswith("next_favorite_page"):
+        print(f'query_data = {query.data}')
+        page_number = int(query.data.split('_')[-1])  # Извлекаем номер страницы из коллбэк данных
+        print(f'before_next_page_number_button = {page_number}')
+        # TODO: Здесь была пагинация в аргументах page_number+1, однако передавался сюда аргумент с уже добавленным числом
+        # TODO: Не понимаю, на каком этапе он его плюсует - разобраться. В любом случае -пагинация работает.
+        # TODO: добавить пагинацию ко второй функции
+        await favorite_movie(update, context, page_number)
+        print(f'after_page_number_button = {page_number}')
+    elif query.data.startswith('prev_favorite_page'):
+        print(f'query_data = {query.data}')
+        page_number = int(query.data.split('_')[-1])
+        print(f'before_prev_page_number_button = {page_number}')
+        await favorite_movie(update, context, page_number)
         print(f'after_page_number_button = {page_number}')
 
 

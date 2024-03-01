@@ -173,14 +173,16 @@ def get_movies_to_watch(conn, user_id, limit=1, offset=0):
 
 
 @ensure_connection
-def get_favorite_movies(conn, user_id):
+def get_favorite_movies(conn, user_id, limit=1, offset=0):
     c = conn.cursor()
     c.execute('''
         SELECT m.title, m.description, m.year, m.genre, m.rating
         FROM favorite_movies m
         INNER JOIN user_favorite_movies um ON m.movie_id = um.movie_id
         WHERE um.user_id = ?
-    ''', (user_id,))
+        LIMIT ?
+        OFFSET ?
+    ''', (user_id, limit, offset))
     return c.fetchall()
 
 
@@ -209,6 +211,7 @@ def get_favorite_movies(conn, user_id):
 if __name__ == '__main__':
     init_db()  # Проверка, есть ли база
 
+    #TODO: ниже наполняем тестовыми данными. Удалить потом при выкате в прод.
     add_favorite_movie(
         user_id=444123456,
         title='Тестовый любимый фильм22222',
