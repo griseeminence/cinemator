@@ -143,6 +143,8 @@ async def random_movie(update, context):
 
 # TODO: Favorite Movie BLOCK
 async def favorite_movie(update, context, page_number=1):
+
+    #TODO: Не работает удаление (диалог полностью пригрывается, но не происходит удаление из бд)
     print(f' page_number = {page_number}')
     user = update.effective_user
     limit = 5
@@ -160,7 +162,7 @@ async def favorite_movie(update, context, page_number=1):
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Список фильмов пуст.")
         return
 
-    formatted_movie_list = "\n\n".join([f"{movie[0]}\n{movie[1]}\n{movie[2]}" for movie in movie_list])
+    formatted_movie_list = "\n\n".join([f"ID фильма: {movie[0]}\nНазвание фильма{movie[1]}\nОписание фильма:{movie[2]}\nГод: {movie[3]}\nЖанр: {movie[4]}\nРейтинг: {movie[5]}\n" for movie in movie_list])
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
