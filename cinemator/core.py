@@ -7,7 +7,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes, \
     CallbackQueryHandler, ConversationHandler
 
-from cinemator.database import init_db, get_movies_to_watch, get_favorite_movies, add_movie_to_watch, add_favorite_movie
+from cinemator.database import init_db, get_movies_to_watch, get_favorite_movies, add_movie_to_watch, add_favorite_movie, del_movie_to_watch
 
 env_variables = dotenv_values(".env")
 
@@ -36,6 +36,8 @@ init_db()
 ENTER_MOVIE = 0
 ADD_TO_LISTS = 1
 ADD_RANDOM_TO_LISTS = 0
+DELETE_FROM_LISTS = 1
+CHOOSE_MOVIE_TO_DELETE = 0
 
 
 # Отдельный декоратора для логгирования
@@ -170,6 +172,10 @@ async def favorite_movie(update, context, page_number=1):
                 text="Предыдущая страница",
                 callback_data=f"prev_favorite_page_{page_number - 1}"  # Увеличиваем номер страницы для следующей кнопки
             )],
+            [InlineKeyboardButton(
+                text="Удалить фильм",
+                callback_data=f"delete_from_favorite_list"
+            )]
         ],
     )
 
@@ -178,6 +184,9 @@ async def favorite_movie(update, context, page_number=1):
         text=formatted_movie_list,
         reply_markup=keyboard
     )
+
+    #Здесь передаём состояние диалога в то, в котором в conversationhandler у нас вызывается следующая функция.
+    return CHOOSE_MOVIE_TO_DELETE
 
     #TODO:  старый код, удалить если актуальный работает без ошибок
     # #
@@ -202,12 +211,13 @@ async def movie_to_watch(update, context, page_number=1):
     print(get_movies_to_watch(user_id=user.id, limit=5, offset=0))
     print(get_movies_to_watch(user_id=user.id, limit=5, offset=5))
     movie_list = get_movies_to_watch(user_id=user.id, limit=limit, offset=offset)
+    print(movie_list)
 
     if not movie_list:
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Список фильмов пуст.")
         return
 
-    formatted_movie_list = "\n\n".join([f"{movie[0]}\n{movie[1]}\n{movie[2]}" for movie in movie_list])
+    formatted_movie_list = "\n\n".join([f"ID фильма: {movie[0]}\nНазвание фильма{movie[1]}\nОписание фильма:{movie[2]}\nГод: {movie[3]}\nЖанр: {movie[4]}\nРейтинг: {movie[5]}\n" for movie in movie_list])
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -219,6 +229,10 @@ async def movie_to_watch(update, context, page_number=1):
                 text="Предыдущая страница",
                 callback_data=f"prev_watch_page_{page_number - 1}"  # Увеличиваем номер страницы для следующей кнопки
             )],
+            [InlineKeyboardButton(
+                text="Удалить фильм",
+                callback_data=f"delete_from_movie_to_watch_list"
+            )]
         ],
     )
 
@@ -227,7 +241,54 @@ async def movie_to_watch(update, context, page_number=1):
         text=formatted_movie_list,
         reply_markup=keyboard
     )
+    #Здесь передаём состояние диалога в то, в котором в conversationhandler у нас вызывается следующая функция.
+    return CHOOSE_MOVIE_TO_DELETE
 
+async def choose_movie_to_delete(update, context):
+    print(f'Захожу в функцию choose_movie_to_delete')
+    user = update.effective_user
+    query = update.callback_query
+    context.user_data['state'] = CHOOSE_MOVIE_TO_DELETE
+    context.user_data['delete_button'] = query.data
+    print(f'Сейчас в контексте delete_button: {context.user_data["delete_button"]}')
+    print(f'Сейчас в контексте state: {context.user_data["state"]}')
+    if query.data == "delete_from_movie_to_watch_list" or query.data == "delete_from_favorite_list":
+        await update.callback_query.message.reply_text(
+            "1Как называется фильм, который ты хочешь удалить?"
+        )
+        print(f'Выхожу из функции choose_movie_to_delete до return')
+        return DELETE_FROM_LISTS
+    print(f'Выхожу из функции choose_movie_to_delete')
+    return DELETE_FROM_LISTS
+
+
+async def delete_from_list(update, context):
+    print(f'Захожу в функцию delete_from_list')
+    user = update.effective_user
+    context.user_data['state'] = DELETE_FROM_LISTS
+    movie_to_delete = update.message.text
+    print(f'Сейчас в контексте state: {context.user_data["state"]}')
+    print(f'Переменная movie_to_delete: {movie_to_delete}')
+    context.user_data['movie_id'] = movie_to_delete
+    print(f'Переменная context.user_data["movie_id"]: {context.user_data["movie_id"]}')
+    await update.message.reply_text(
+        f"Спасибо, {update.effective_chat.username}! Выполняю удаление фильма: {movie_to_delete}"
+    )
+    del_movie_to_watch(user_id=user.id, movie_id=movie_to_delete)
+
+
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton("Menu", callback_data="start")],
+        ],
+    )
+    await update.message.reply_text(
+        "Фильм успешно удалён",
+        reply_markup=keyboard
+    )
+    print(f'Выхожу из функции delete_from_list')
+    return ConversationHandler.END
 
 # TODO: END Movie to watch BLOCK
 
@@ -383,6 +444,8 @@ if __name__ == '__main__':
     start_handler = CommandHandler('start', start)
     start_movie_search_handler = CallbackQueryHandler(start_movie_search, pattern=r'^ask_movie_name$')
     random_movie_handler = CallbackQueryHandler(random_movie, pattern=r'^random_movie$')
+    favorite_movie_handler = CallbackQueryHandler(favorite_movie, pattern=r'^favorite_movie$')
+    movie_to_watch_handler = CallbackQueryHandler(movie_to_watch, pattern=r'^movie_to_watch$')
     search_conversation_handler = ConversationHandler(
         entry_points=[start_movie_search_handler],
         states={
@@ -398,19 +461,35 @@ if __name__ == '__main__':
         },
         fallbacks=[],
     )
-
-    favorite_movie_handler = CallbackQueryHandler(favorite_movie, pattern=r'^favorite_movie$')
-    movie_to_watch_handler = CallbackQueryHandler(movie_to_watch, pattern=r'^movie_to_watch$')
+    favorite_movie_conversation_handler = ConversationHandler(
+        entry_points=[favorite_movie_handler],
+        states={
+            CHOOSE_MOVIE_TO_DELETE: [CallbackQueryHandler(choose_movie_to_delete)],
+            DELETE_FROM_LISTS: [MessageHandler(filters.TEXT & (~filters.COMMAND), delete_from_list)]
+        },
+        fallbacks=[],
+    )
+    movie_to_watch_conversation_handler = ConversationHandler(
+        entry_points=[movie_to_watch_handler],
+        states={
+            CHOOSE_MOVIE_TO_DELETE: [CallbackQueryHandler(choose_movie_to_delete)],
+            DELETE_FROM_LISTS: [MessageHandler(filters.TEXT & (~filters.COMMAND), delete_from_list)]
+        },
+        fallbacks=[],
+    )
     unknown_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), unknown)
 
     application.add_handler(search_conversation_handler)
+    application.add_handler(favorite_movie_conversation_handler)
+    application.add_handler(movie_to_watch_conversation_handler)
     application.add_handler(random_conversation_handler)
     application.add_handler(start_handler)
     application.add_handler(start_movie_search_handler)
     application.add_handler(random_movie_handler)
     application.add_handler(favorite_movie_handler)
     application.add_handler(movie_to_watch_handler)
-    application.add_handler(unknown_handler)
+
     application.add_handler(CallbackQueryHandler(button))
+    application.add_handler(unknown_handler)
 
     application.run_polling()

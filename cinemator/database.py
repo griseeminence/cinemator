@@ -157,15 +157,15 @@ def add_favorite_movie(conn, user_id, title, description, year, genre, rating):
     return True
 
 @ensure_connection
-def del_movie_to_watch(conn, user_id, title, movie_id):
+def del_movie_to_watch(conn, user_id, movie_id):
     c = conn.cursor()
 
     # Проверяем, существует ли фильм в списке "Смотреть позже" для данного пользователя
     c.execute('''
         SELECT 1 FROM user_movies_to_watch WHERE user_id = ? AND EXISTS (
-            SELECT 1 FROM movies_to_watch WHERE title = ? AND movie_id = ?
+            SELECT 1 FROM movies_to_watch WHERE movie_id = ?
         )
-    ''', (user_id, title, movie_id))
+    ''', (user_id, movie_id))
 
     if not c.fetchone():
         print("Такого фильма нет в вашем списке 'Смотреть позже'!")
@@ -180,10 +180,32 @@ def del_movie_to_watch(conn, user_id, title, movie_id):
 
 
 @ensure_connection
+def del_favorite_movies(conn, user_id, movie_id):
+    c = conn.cursor()
+
+    # Проверяем, существует ли фильм в списке "Смотреть позже" для данного пользователя
+    c.execute('''
+        SELECT 1 FROM user_favorite_movies WHERE user_id = ? AND EXISTS (
+            SELECT 1 FROM favorite_movies WHERE movie_id = ?
+        )
+    ''', (user_id, movie_id))
+
+    if not c.fetchone():
+        print("Такого фильма нет в вашем списке 'Избранные фильмы'!")
+        return False
+
+    # Удаляем связь между пользователем и фильмом в таблице user_movies_to_watch
+    c.execute('DELETE FROM user_favorite_movies WHERE user_id = ? AND movie_id = ?', (user_id, movie_id))
+    conn.commit()
+
+    print("Фильм успешно удален из вашего списка 'Избранные фильмы'.")
+    return True
+
+@ensure_connection
 def get_movies_to_watch(conn, user_id, limit=1, offset=0):
     c = conn.cursor()
     c.execute('''
-        SELECT m.title, m.description, m.year, m.genre, m.rating
+        SELECT um.movie_id, m.title, m.description, m.year, m.genre, m.rating
         FROM movies_to_watch m
         INNER JOIN user_movies_to_watch um ON m.movie_id = um.movie_id
         WHERE um.user_id = ?
@@ -197,7 +219,7 @@ def get_movies_to_watch(conn, user_id, limit=1, offset=0):
 def get_favorite_movies(conn, user_id, limit=1, offset=0):
     c = conn.cursor()
     c.execute('''
-        SELECT m.title, m.description, m.year, m.genre, m.rating
+        SELECT um.movie_id, m.title, m.description, m.year, m.genre, m.rating
         FROM favorite_movies m
         INNER JOIN user_favorite_movies um ON m.movie_id = um.movie_id
         WHERE um.user_id = ?
