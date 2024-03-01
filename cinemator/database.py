@@ -125,7 +125,6 @@ def add_movie_to_watch(conn, user_id, title, description, year, genre, rating):
     print("Фильм успешно добавлен в список любимых для этого пользователя.")
     return True
 
-
 @ensure_connection
 def add_favorite_movie(conn, user_id, title, description, year, genre, rating):
     c = conn.cursor()
@@ -155,6 +154,28 @@ def add_favorite_movie(conn, user_id, title, description, year, genre, rating):
     conn.commit()
 
     print("Фильм успешно добавлен в список любимых для этого пользователя.")
+    return True
+
+@ensure_connection
+def del_movie_to_watch(conn, user_id, title, movie_id):
+    c = conn.cursor()
+
+    # Проверяем, существует ли фильм в списке "Смотреть позже" для данного пользователя
+    c.execute('''
+        SELECT 1 FROM user_movies_to_watch WHERE user_id = ? AND EXISTS (
+            SELECT 1 FROM movies_to_watch WHERE title = ? AND movie_id = ?
+        )
+    ''', (user_id, title, movie_id))
+
+    if not c.fetchone():
+        print("Такого фильма нет в вашем списке 'Смотреть позже'!")
+        return False
+
+    # Удаляем связь между пользователем и фильмом в таблице user_movies_to_watch
+    c.execute('DELETE FROM user_movies_to_watch WHERE user_id = ? AND movie_id = ?', (user_id, movie_id))
+    conn.commit()
+
+    print("Фильм успешно удален из вашего списка 'Смотреть позже'.")
     return True
 
 
