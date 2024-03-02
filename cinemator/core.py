@@ -145,6 +145,7 @@ async def random_movie(update, context):
 async def favorite_movie(update, context, page_number=1):
 
     #TODO: Не работает удаление (диалог полностью пригрывается, но не происходит удаление из бд)
+    #TODO:
     print(f' page_number = {page_number}')
     user = update.effective_user
     limit = 5
