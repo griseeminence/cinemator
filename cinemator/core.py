@@ -7,7 +7,8 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes, \
     CallbackQueryHandler, ConversationHandler
 
-from cinemator.database import init_db, get_movies_to_watch, get_favorite_movies, add_movie_to_watch, add_favorite_movie, del_movie_to_watch
+from cinemator.database import init_db, get_movies_to_watch, get_favorite_movies, add_movie_to_watch, \
+    add_favorite_movie, del_movie_to_watch
 
 env_variables = dotenv_values(".env")
 
@@ -80,31 +81,31 @@ async def start(update, context):
     if update.message:
         keyboard = get_keyboard()
         await update.message.reply_text(
-            "Привет! Давай начнем. Что я могу для тебя сделать?",
+            'Привет! Давай начнем. Что я могу для тебя сделать?',
             reply_markup=keyboard
         )
     elif update.callback_query:
         data = update.callback_query.data
-        if data == "start":
+        # Заменить условия другой логикой
+        if data == 'start' or data == 'add_to_list_movie_to_watch' or data == 'add_to_list_favorite_movie' or data == 'delete_from_lists':
             keyboard = get_keyboard()
             await update.callback_query.message.reply_text(
-                "Хорошо, начнём с самого начала. Что я могу для тебя сделать?",
+                'Хорошо, начнём с самого начала. Что я могу для тебя сделать?',
                 reply_markup=keyboard
             )
     else:
-        print("Обновление не содержит ни сообщения, ни данных коллбэка.")
+        print('Обновление не содержит ни сообщения, ни данных коллбэка.')
     print(f'Вышел из функции старт')
 
 
 # TODO: Random Movie BLOCK
 async def random_movie(update, context):
-    # TODO: Выдаёт рандомный тайтл. У фильмов часто пустые поля. Придумать, как фильтровать рандом по списку топ-250
-
-    # url_random_250 = 'https://api.kinopoisk.dev/v1.4/movie?page=1&limit=250&selectFields=id&selectFields=top250&sortField=top250&sortType=-1'
-    # url_random_250 = 'https://api.kinopoisk.dev/v1.4/movie?page=1&limit=250&selectFields=id&selectFields=top250&selectFields=name&selectFields=description&selectFields=year&selectFields=rating&selectFields=poster&selectFields=genres&sortField=top250&sortType=-1'
+    print(f'Захожу в функцию random_movie')
+    await update.callback_query.message.reply_text(
+        f"Спасибо, {update.effective_chat.username}! Выбираю фильм..."
+    )
     url_random_250 = 'https://api.kinopoisk.dev/v1.4/movie?page=1&limit=250&selectFields=id&selectFields=top250&selectFields=name&selectFields=description&selectFields=year&selectFields=rating&selectFields=poster&selectFields=genres&selectFields=type&sortField=top250&sortType=-1&type=movie'
-    random_250 = random.randrange(0, 250)
-
+    random_250 = random.randrange(0, 250)  # Подбор 250 лучших фильмов. В апи кинопоиска нет отдельного фильтра.
     name = requests.get(url_random_250, headers=headers).json()['docs'][random_250]['name']
     genres = requests.get(url_random_250, headers=headers).json()['docs'][random_250]['genres'][0]['name']
     id = requests.get(url_random_250, headers=headers).json()['docs'][random_250]['id']
@@ -134,7 +135,7 @@ async def random_movie(update, context):
         "Хочешь сохранить фильм?",
         reply_markup=keyboard
     )
-
+    print(f'Выхожу из функции random_movie')
     return ADD_TO_LISTS
 
 
@@ -143,9 +144,8 @@ async def random_movie(update, context):
 
 # TODO: Favorite Movie BLOCK
 async def favorite_movie(update, context, page_number=1):
-
-    #TODO: Не работает удаление (диалог полностью пригрывается, но не происходит удаление из бд)
-    #TODO: не решено
+    # TODO: Не работает удаление (диалог полностью пригрывается, но не происходит удаление из бд)
+    # TODO: не решено
     print(f' page_number = {page_number}')
     user = update.effective_user
     limit = 5
@@ -163,7 +163,9 @@ async def favorite_movie(update, context, page_number=1):
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Список фильмов пуст.")
         return
 
-    formatted_movie_list = "\n\n".join([f"ID фильма: {movie[0]}\nНазвание фильма{movie[1]}\nОписание фильма:{movie[2]}\nГод: {movie[3]}\nЖанр: {movie[4]}\nРейтинг: {movie[5]}\n" for movie in movie_list])
+    formatted_movie_list = "\n\n".join([
+                                           f"ID фильма: {movie[0]}\nНазвание фильма{movie[1]}\nОписание фильма:{movie[2]}\nГод: {movie[3]}\nЖанр: {movie[4]}\nРейтинг: {movie[5]}\n"
+                                           for movie in movie_list])
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -188,15 +190,16 @@ async def favorite_movie(update, context, page_number=1):
         reply_markup=keyboard
     )
 
-    #Здесь передаём состояние диалога в то, в котором в conversationhandler у нас вызывается следующая функция.
+    # Здесь передаём состояние диалога в то, в котором в conversationhandler у нас вызывается следующая функция.
     return CHOOSE_MOVIE_TO_DELETE
 
-    #TODO:  старый код, удалить если актуальный работает без ошибок
+    # TODO:  старый код, удалить если актуальный работает без ошибок
     # #
     # movie_list = get_favorite_movies(user_id=user.id)
     # formatted_movie_list = "\n\n".join([f"{movie[0]}\n{movie[1]}\n{movie[2]}" for movie in movie_list])
     # await context.bot.send_message(chat_id=update.effective_chat.id, text=formatted_movie_list)
     # #
+
 
 # TODO: END Favorite Movie BLOCK
 
@@ -220,7 +223,9 @@ async def movie_to_watch(update, context, page_number=1):
         await context.bot.send_message(chat_id=update.effective_chat.id, text="Список фильмов пуст.")
         return
 
-    formatted_movie_list = "\n\n".join([f"ID фильма: {movie[0]}\nНазвание фильма{movie[1]}\nОписание фильма:{movie[2]}\nГод: {movie[3]}\nЖанр: {movie[4]}\nРейтинг: {movie[5]}\n" for movie in movie_list])
+    formatted_movie_list = "\n\n".join([
+                                           f"ID фильма: {movie[0]}\nНазвание фильма{movie[1]}\nОписание фильма:{movie[2]}\nГод: {movie[3]}\nЖанр: {movie[4]}\nРейтинг: {movie[5]}\n"
+                                           for movie in movie_list])
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -244,8 +249,9 @@ async def movie_to_watch(update, context, page_number=1):
         text=formatted_movie_list,
         reply_markup=keyboard
     )
-    #Здесь передаём состояние диалога в то, в котором в conversationhandler у нас вызывается следующая функция.
+    # Здесь передаём состояние диалога в то, в котором в conversationhandler у нас вызывается следующая функция.
     return CHOOSE_MOVIE_TO_DELETE
+
 
 async def choose_movie_to_delete(update, context):
     print(f'Захожу в функцию choose_movie_to_delete')
@@ -278,20 +284,10 @@ async def delete_from_list(update, context):
         f"Спасибо, {update.effective_chat.username}! Выполняю удаление фильма: {movie_to_delete}"
     )
     del_movie_to_watch(user_id=user.id, movie_id=movie_to_delete)
-
-
-
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton("Menu", callback_data="start")],
-        ],
-    )
-    await update.message.reply_text(
-        "Фильм успешно удалён",
-        reply_markup=keyboard
-    )
-    print(f'Выхожу из функции delete_from_list')
+    #Убрал клавиатуру => просто вызовем старт
+    await start(update, context)
     return ConversationHandler.END
+
 
 # TODO: END Movie to watch BLOCK
 
@@ -378,6 +374,7 @@ async def add_to_lists(update, context):
                 rating=movie_info['rating']
             )
         await query.message.reply_text(f'Movie {movie_info["name"]} successfully added to Movie to watch list!')
+        await start(update, context)
     else:
         await start(update, context)
 
