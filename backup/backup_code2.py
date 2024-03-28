@@ -7,7 +7,7 @@ from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHan
 
 from cinemator.database import init_db, get_movies_to_watch, get_favorite_movies, add_movie_to_watch, add_favorite_movie
 
-env_variables = dotenv_values(".env")
+env_variables = dotenv_values("../cinemator/.env")
 
 TG_TOKEN = env_variables.get("TG_TOKEN")
 KINOPOISK_TOKEN = env_variables.get("KINOPOISK_TOKEN")

@@ -9,6 +9,7 @@ from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHan
 
 from cinemator.database import init_db, get_movies_to_watch, get_favorite_movies, add_movie_to_watch, \
     add_favorite_movie, del_movie_to_watch
+from cinemator.tools import get_keyboard, debug_requests
 
 env_variables = dotenv_values(".env")
 
@@ -41,32 +42,7 @@ DELETE_FROM_LISTS = 1
 CHOOSE_MOVIE_TO_DELETE = 0
 
 
-# Отдельный декоратора для логгирования
-def debug_requests(f):
-    from logging import getLogger
-    logger = getLogger(__name__)
 
-    def inner(*args, **kwargs):
-        try:
-            logger.info(f'Обращение в функцию {__name__}')
-            return f(*args, **kwargs)
-        except Exception as e:
-            logger.exception(f'Ошибка в обработчике {__name__}')
-            raise
-
-    return inner
-
-
-# Вызываемая клавиатура
-def get_keyboard():
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton("Find Movie", callback_data="ask_movie_name")],
-            [InlineKeyboardButton("Random Movie", callback_data="random_movie")],
-            [InlineKeyboardButton("Favorite Movie", callback_data="favorite_movie")],
-            [InlineKeyboardButton("Movie to watch", callback_data="movie_to_watch")],
-        ],
-    )
 
 
 async def start(update, context):
