@@ -18,6 +18,9 @@ init_db()
 # TODO #3: Сломалось удаление из списков
 # TODO #4: Разбить и отрефакторить код ещё больше
 # TODO #5: Написать readme
+# TODO #6: Придумать, как картинку к фильму (постер) присылать ИЗ API без ссылки.
+# TODO #7: Разобраться с buttons. Есть ощущение, что можно половину оттуда безопасно удалить.
+
 
 
 @logger_in_out
@@ -112,14 +115,17 @@ async def favorite_movie(update, context, page_number=1):
     formatted_movie_list = "\n\n".join(
         [
             (
-                f"ID: {movie[0]}\n"
-                f"Title {movie[1]}\n"
-                f"Description: {movie[2]}\n"
-                f"Year: {movie[3]}\n"
-                f"Genre: {movie[4]}\n"
-                f"Rating: {movie[5]}\n"
+                f"{movie[1]}\n"
+                f"ID: {movie[0]}\n\n"
+                f"- Description:\n{movie[2]}\n\n"
+                f"- Year:\n{movie[3]}\n\n"
+                f"- Genre:\n{movie[4]}\n\n"
+                f"- Rating:\n{movie[5]}\n\n"
+                f"_______________________________________________________\n\n"
             )
-            for movie in movie_list])
+            for movie in movie_list
+        ]
+    )
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -166,9 +172,20 @@ async def movie_to_watch(update, context, page_number=1):
         await context.bot.send_message(chat_id=update.effective_chat.id, text="No movies in the list.")
         return
 
-    formatted_movie_list = "\n\n".join([
-        f"ID: {movie[0]}\nTitle {movie[1]}\nDescription: {movie[2]}\nYear: {movie[3]}\nGenre: {movie[4]}\nRating: {movie[5]}\n"
-        for movie in movie_list])
+    formatted_movie_list = "\n\n".join(
+        [
+            (
+                f"{movie[1]}\n"
+                f"ID: {movie[0]}\n\n"
+                f"- Description:\n{movie[2]}\n\n"
+                f"- Year:\n{movie[3]}\n\n"
+                f"- Genre:\n{movie[4]}\n\n"
+                f"- Rating:\n{movie[5]}\n\n"
+                f"_______________________________________________________\n\n"
+            )
+            for movie in movie_list
+        ]
+    )
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
