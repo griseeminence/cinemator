@@ -229,27 +229,6 @@ def get_favorite_movies(conn, user_id, limit=1, offset=0):
     return c.fetchall()
 
 
-# @ensure_connection
-# def add_message(conn, user_id: int, text: str):
-#     c = conn.cursor()
-#     c.execute('INSERT INTO user_message (user_id, text) VALUES (?, ?)', (user_id, text))
-#     conn.commit()
-#
-#
-# @ensure_connection
-# def count_message(conn, user_id: int):
-#     c = conn.cursor()
-#     c.execute('SELECT COUNT(*) FROM user_message WHERE user_id = ?', (user_id,))
-#     (res,) = c.fetchall()  # fetchall отдаёт список результатов
-#     return res
-#
-#
-# @ensure_connection
-# def list_messages(conn, user_id: int, limit: int = 10):
-#     c = conn.cursor()
-#     c.execute('SELECT id, text FROM user_message WHERE user_id = ? ORDER BY id DESC LIMIT ?', (user_id, limit))
-#     return c.fetchall()
-
 
 if __name__ == '__main__':
     init_db()  # Проверка, есть ли база
@@ -264,9 +243,6 @@ if __name__ == '__main__':
         rating=3
     )
 
-    test_favorite_movie = get_favorite_movies(user_id=123456)
-    for i in test_favorite_movie:
-        print(*i)
 
     add_movie_to_watch(
         user_id=123456,
@@ -276,16 +252,3 @@ if __name__ == '__main__':
         genre='Тестовый жанр2',
         rating=3
     )
-
-    test_movie_to_watch = get_movies_to_watch(user_id=123456)
-    for i in test_movie_to_watch:
-        print(*i)
-
-    # add_message(user_id=123, text='keke222keke')  # Добавляем сообщение
-    #
-    # r = count_message(user_id=123)  # Считаем количество сообщений у пользователя
-    # print(r)
-    #
-    # r = list_messages(user_id=123, limit=3)
-    # for i in r:
-    #     print(i)

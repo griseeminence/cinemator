@@ -6,7 +6,7 @@ from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHan
     CallbackQueryHandler, ConversationHandler
 
 from cinemator.database import get_movies_to_watch, get_favorite_movies, add_movie_to_watch, \
-    add_favorite_movie, del_movie_to_watch, init_db
+    add_favorite_movie, del_movie_to_watch, init_db, del_favorite_movies
 from cinemator.tools import *
 from cinemator.constants import *
 
@@ -136,6 +136,11 @@ async def favorite_movie(update, context, page_number=1):
         reply_markup=keyboard
     )
 
+    print(f'Выхожу из функции favorite')
+    user = update.effective_user
+    query = update.callback_query
+    print(f'query_data = {query.data}')
+
     return CHOOSE_MOVIE_TO_DELETE
 
 
@@ -180,9 +185,12 @@ async def movie_to_watch(update, context, page_number=1):
         text=formatted_movie_list,
         reply_markup=keyboard
     )
+    print(f'Выхожу из функции movie_to_watch')
+    user = update.effective_user
+    query = update.callback_query
+    print(f'query_data = {query.data}')
 
     return CHOOSE_MOVIE_TO_DELETE
-
 
 async def choose_movie_to_delete(update, context):
     """Write an ID (or smth) to delete """
@@ -192,19 +200,30 @@ async def choose_movie_to_delete(update, context):
     context.user_data['delete_button'] = query.data
     print(f'Сейчас в контексте delete_button: {context.user_data["delete_button"]}')
     print(f'Сейчас в контексте state: {context.user_data["state"]}')
+    context.user_data["list_type"] = query.data
     if query.data == "delete_from_movie_to_watch_list" or query.data == "delete_from_favorite_list":
         await update.callback_query.message.reply_text(
             "Write an ID of the movie you want to delete"
         )
         print(f'Выхожу из функции choose_movie_to_delete до return')
+        print(f' сейчас в контексте List_type: {context.user_data["list_type"]}')
         return DELETE_FROM_LISTS
+
+    print(f' сейчас в контексте List_type: {context.user_data["list_type"]}')
     print(f'Выхожу из функции choose_movie_to_delete')
+    print(f'Сейчас в контексте state: {context.user_data["state"]}')
+
     return DELETE_FROM_LISTS
 
 
 async def delete_from_list(update, context):
     """Movie deletion logic"""
     print(f'Захожу в функцию delete_from_list')
+
+    list_type = context.user_data.get('list_type')
+    print(context.user_data["list_type"])
+    print(f'list_type = {list_type}')
+
     user = update.effective_user
     context.user_data['state'] = DELETE_FROM_LISTS
     movie_to_delete = update.message.text
@@ -215,7 +234,11 @@ async def delete_from_list(update, context):
     await update.message.reply_text(
         f"Thanks, {update.effective_chat.username}! Deleting: {movie_to_delete}..."
     )
-    del_movie_to_watch(user_id=user.id, movie_id=movie_to_delete)
+    if list_type == "delete_from_movie_to_watch_list":
+        del_movie_to_watch(user_id=user.id, movie_id=movie_to_delete)
+    elif list_type == "delete_from_favorite_list":
+        del_favorite_movies(user_id=user.id, movie_id=movie_to_delete)
+
     await start(update, context)
     return ConversationHandler.END
 
