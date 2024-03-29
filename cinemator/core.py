@@ -14,15 +14,17 @@ init_db()
 
 
 # Сделано TODO #1: Придумать, как вставить клавиатуру из вспомогательного файла (favorite, movie_to_watch)
-# TODO #2: Сломалась пагинация в favorites полность, а в movies_to_watch не работает delete после кнопки next page
-# TODO #3: Сломалось удаление из списков
+# Сделано TODO #2: Сломалась пагинация в favorites полность, а в movies_to_watch не работает delete после кнопки next page
+# Сделано TODO #3: Сломалось удаление из списков
 # TODO #4: Разбить и отрефакторить код ещё больше
 # TODO #5: Написать readme
 # TODO #6: Придумать, как картинку к фильму (постер) присылать ИЗ API без ссылки.
 # TODO #7: Разобраться с buttons. Есть ощущение, что можно половину оттуда безопасно удалить.
 # TODO #8: Разобраться с ошибкой обработчиков Conversation: C:\Development\GitHub\cinemator\cinemator\core.py:424: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
 #   movie_to_watch_conversation_handler = ConversationHandler(
-
+# TODO #9: При работе в списках кнопки становятся неактивными после первого нажатия. Это ломает логику.
+#   Например, если в  своём списка нажать на "next page", то кнопка "delete movie" уже не работает.
+#   Придумать, как это исправить.
 
 @logger_in_out
 async def start(update, context):
