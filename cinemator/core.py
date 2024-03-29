@@ -13,14 +13,15 @@ from cinemator.constants import *
 init_db()
 
 
-# TODO #1: Придумать, как вставить клавиатуру из вспомогательного файла (favorite, movie_to_watch)
+# Сделано TODO #1: Придумать, как вставить клавиатуру из вспомогательного файла (favorite, movie_to_watch)
 # TODO #2: Сломалась пагинация в favorites полность, а в movies_to_watch не работает delete после кнопки next page
 # TODO #3: Сломалось удаление из списков
 # TODO #4: Разбить и отрефакторить код ещё больше
 # TODO #5: Написать readme
 # TODO #6: Придумать, как картинку к фильму (постер) присылать ИЗ API без ссылки.
 # TODO #7: Разобраться с buttons. Есть ощущение, что можно половину оттуда безопасно удалить.
-
+# TODO #8: Разобраться с ошибкой обработчиков Conversation: C:\Development\GitHub\cinemator\cinemator\core.py:424: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+#   movie_to_watch_conversation_handler = ConversationHandler(
 
 
 @logger_in_out
@@ -127,22 +128,7 @@ async def favorite_movie(update, context, page_number=1):
         ]
     )
 
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(
-                text="Next Page",
-                callback_data=f"next_favorite_page_{page_number + 1}"  # Увеличиваем номер страницы для следующей кнопки
-            )],
-            [InlineKeyboardButton(
-                text="Previous Page",
-                callback_data=f"prev_favorite_page_{page_number - 1}"  # Увеличиваем номер страницы для следующей кнопки
-            )],
-            [InlineKeyboardButton(
-                text="Delete Movie",
-                callback_data=f"delete_from_favorite_list"
-            )]
-        ],
-    )
+    keyboard = get_pagination_favorite_keyboard(page_number)
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -187,22 +173,7 @@ async def movie_to_watch(update, context, page_number=1):
         ]
     )
 
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(
-                text="Next Page",
-                callback_data=f"next_watch_page_{page_number + 1}"  # Увеличиваем номер страницы для следующей кнопки
-            )],
-            [InlineKeyboardButton(
-                text="Previous Page",
-                callback_data=f"prev_watch_page_{page_number - 1}"  # Увеличиваем номер страницы для следующей кнопки
-            )],
-            [InlineKeyboardButton(
-                text="Delete Movie",
-                callback_data=f"delete_from_movie_to_watch_list"
-            )]
-        ],
-    )
+    keyboard = get_pagination_movie_to_watch_keyboard(page_number)
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,

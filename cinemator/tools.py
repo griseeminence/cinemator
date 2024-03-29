@@ -38,16 +38,16 @@ def get_save_movie_keyboard():
         ],
     )
 
-def get_pagination_movie_to_watch_keyboard():
-    return InlineKeyboardMarkup(
+def get_pagination_movie_to_watch_keyboard(page_number):
+    keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
                 text="Next Page",
-                callback_data=f"next_watch_page_{page_number + 1}"  # Увеличиваем номер страницы для следующей кнопки
+                callback_data=f"next_watch_page_{page_number + 1}"
             )],
             [InlineKeyboardButton(
-                text="Next Page",
-                callback_data=f"prev_watch_page_{page_number - 1}"  # Увеличиваем номер страницы для следующей кнопки
+                text="Previous Page",
+                callback_data=f"prev_watch_page_{page_number - 1}"
             )],
             [InlineKeyboardButton(
                 text="Delete Movie",
@@ -55,9 +55,10 @@ def get_pagination_movie_to_watch_keyboard():
             )]
         ],
     )
+    return keyboard
 
 
-def get_pagination_favorite_keyboard():
+def get_pagination_favorite_keyboard(page_number):
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
