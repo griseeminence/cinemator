@@ -13,21 +13,24 @@ from cinemator.constants import *
 init_db()
 
 
-# Сделано TODO #1: Придумать, как вставить клавиатуру из вспомогательного файла (favorite, movie_to_watch)
-# Сделано TODO #2: Сломалась пагинация в favorites полность, а в movies_to_watch не работает delete после кнопки next page
-# Сделано TODO #3: Сломалось удаление из списков
+# Решено  #1: Придумать, как вставить клавиатуру из вспомогательного файла (favorite, movie_to_watch)
+# Решено  #2: Сломалась пагинация в favorites полность, а в movies_to_watch не работает delete после кнопки next page
+# Решено  #3: Сломалось удаление из списков
 # TODO #4: Разбить и отрефакторить код ещё больше
 # TODO #5: Написать readme
-# Сделано, TODO #6: Придумать, как картинку к фильму (постер) присылать ИЗ API без ссылки.
+# Решено,  #6: Придумать, как картинку к фильму (постер) присылать ИЗ API без ссылки.
 #    Добавил отправку фото с текстом вместо текстового сообщения со ссылкой на фото
 #    await context.bot.send_photo(chat_id=update.effective_chat.id, photo=poster, caption=caption, parse_mode='HTML')
 # TODO #7: Разобраться с buttons. Есть ощущение, что можно половину оттуда безопасно удалить.
-# TODO #8: Разобраться с ошибкой обработчиков Conversation: C:\Development\GitHub\cinemator\cinemator\core.py:424: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+# Решено #8: Разобраться с ошибкой обработчиков Conversation: C:\Development\GitHub\cinemator\cinemator\core.py:424: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
 #   movie_to_watch_conversation_handler = ConversationHandler(
+# Решение: В библиотеке python-telegram-bot нет прямой поддержки параметра per_message.
+# Вместо этого, обработчики событий автоматически отслеживаются для каждого сообщения,
+# поэтому вам не нужно явно указывать этот параметр.
 # TODO #9: При работе в списках кнопки становятся неактивными после первого нажатия. Это ломает логику.
 #   Например, если в  своём списка нажать на "next page", то кнопка "delete movie" уже не работает.
 #   Придумать, как это исправить.
-
+# Решено ODO: #10 Удаление перестало работать!
 @logger_in_out
 async def start(update, context):
     """
@@ -98,7 +101,7 @@ async def random_movie(update, context):
 
 
 async def favorite_movie(update, context, page_number=1):
-    # TODO: Не работает удаление (диалог полностью пригрывается, но не происходит удаление из бд)
+    # TODO: Не работает удаление (диалог полностью проигрывается, но не происходит удаление из бд)
     # TODO: не решено
     print(f' page_number = {page_number}')
     user = update.effective_user
@@ -193,8 +196,8 @@ async def movie_to_watch(update, context, page_number=1):
     user = update.effective_user
     query = update.callback_query
     print(f'query_data = {query.data}')
-
-    return CHOOSE_MOVIE_TO_DELETE
+    if query.data == "delete_from_movie_to_watch_list" or query.data == "delete_from_favorite_list":
+        return CHOOSE_MOVIE_TO_DELETE
 
 
 async def choose_movie_to_delete(update, context):

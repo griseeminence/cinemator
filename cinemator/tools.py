@@ -59,7 +59,7 @@ def get_pagination_movie_to_watch_keyboard(page_number):
 
 
 def get_pagination_favorite_keyboard(page_number):
-    return InlineKeyboardMarkup(
+    keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
                 text="Следующая страница",
@@ -75,3 +75,5 @@ def get_pagination_favorite_keyboard(page_number):
             )]
         ],
     )
+
+    return keyboard
