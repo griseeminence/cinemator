@@ -18,7 +18,9 @@ init_db()
 # Сделано TODO #3: Сломалось удаление из списков
 # TODO #4: Разбить и отрефакторить код ещё больше
 # TODO #5: Написать readme
-# TODO #6: Придумать, как картинку к фильму (постер) присылать ИЗ API без ссылки.
+# Сделано, TODO #6: Придумать, как картинку к фильму (постер) присылать ИЗ API без ссылки.
+#    Добавил отправку фото с текстом вместо текстового сообщения со ссылкой на фото
+#    await context.bot.send_photo(chat_id=update.effective_chat.id, photo=poster, caption=caption, parse_mode='HTML')
 # TODO #7: Разобраться с buttons. Есть ощущение, что можно половину оттуда безопасно удалить.
 # TODO #8: Разобраться с ошибкой обработчиков Conversation: C:\Development\GitHub\cinemator\cinemator\core.py:424: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
 #   movie_to_watch_conversation_handler = ConversationHandler(
@@ -194,6 +196,7 @@ async def movie_to_watch(update, context, page_number=1):
 
     return CHOOSE_MOVIE_TO_DELETE
 
+
 async def choose_movie_to_delete(update, context):
     """Write an ID (or smth) to delete """
     print(f'Захожу в функцию choose_movie_to_delete')
@@ -291,11 +294,13 @@ async def save_movie_name(update, context):
         f'- Poster: {poster}'
     )
 
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=message_text)
-
+    # Отправка изображения с текстом в чат
+    caption = f"<b>{name}</b>\n\nGenres: {genres}\nYear: {year}\nDescription: {description}"
+    await context.bot.send_photo(chat_id=update.effective_chat.id, photo=poster, caption=caption, parse_mode='HTML')
+    # parse_mode даёт возможность использовать разметку и правила HTML (полезно для текста курсив, жирыный, подчеркнутый и тд).
     keyboard = get_save_movie_keyboard()
     await update.message.reply_text(
-        "Do you wanna safe movie?",
+        "Do you wanna save movie?",
         reply_markup=keyboard
     )
 
