@@ -8,10 +8,10 @@ __connection = None
 
 def ensure_connection(func):
     """
-    Декоратор позволяет не открывать соединение в каждой функции явно.
-    Декоратор открывает соединение (путём with...), передаёт его в функцию, к которой он применён.
-    А после выхода из with - декортатор закрывает соединения.
-    Это делает подключения к базе данных более безопасными.
+    The decorator allows not to explicitly open a connection in each function.
+    The decorator opens a connection (using with...), passes it to the function to which it is applied.
+    And after exiting the with block, the decorator closes the connection.
+    This makes database connections more secure.
     """
 
     def inner(*args, **kwargs):
