@@ -35,7 +35,7 @@ init_db()
 # TODO #11: После next_page не работает delete в списках фильмов.
 # TODO #12: Перенести buttons в tools и настроить логику.
 # TODO #13: Переписать под вебхуки
-
+#   TODO #14:   https
 @logger_in_out
 async def start(update, context):
     """
@@ -204,6 +204,7 @@ async def movie_to_watch(update, context, page_number=1):
     if query.data == "delete_from_movie_to_watch_list" or query.data == "delete_from_favorite_list":
         return CHOOSE_MOVIE_TO_DELETE
 
+################################
 
 async def choose_movie_to_delete(update, context):
     """Write an ID (or smth) to delete """
