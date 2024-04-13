@@ -35,7 +35,7 @@ init_db()
 # TODO #11: После next_page не работает delete в списках фильмов.
 # TODO #12: Перенести buttons в tools и настроить логику.
 # TODO #13: Переписать под вебхуки
-#   TODO #14:   https
+
 @logger_in_out
 async def start(update, context):
     """
