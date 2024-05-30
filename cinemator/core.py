@@ -204,8 +204,8 @@ async def movie_to_watch(update, context, page_number=1):
     if query.data == "delete_from_movie_to_watch_list" or query.data == "delete_from_favorite_list":
         return CHOOSE_MOVIE_TO_DELETE
 
-################################
-
+######
+#Tests
 async def choose_movie_to_delete(update, context):
     """Write an ID (or smth) to delete """
     print(f'Захожу в функцию choose_movie_to_delete')
