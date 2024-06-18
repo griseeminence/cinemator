@@ -3,7 +3,7 @@ import sqlite3
 
 __connection = None
 
-
+#Tests
 def ensure_connection(func):
     """
     The decorator allows not to explicitly open a connection in each function.
