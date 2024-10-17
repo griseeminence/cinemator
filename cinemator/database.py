@@ -1,20 +1,21 @@
 import sqlite3
 
-
 __connection = None
 
-#Tests
+
 def ensure_connection(func):
     """
-    The decorator allows not to explicitly open a connection in each function.
-    The decorator opens a connection (using with...), passes it to the function to which it is applied.
-    And after exiting the with block, the decorator closes the connection.
-    This makes database connections more secure.
+    Decorator to manage database connections.
+
+    This decorator opens a connection to the SQLite database when the decorated
+    function is called, passes the connection to the function, and ensures that
+    the connection is closed after the function completes. This approach enhances
+    security and reduces the risk of connection leaks.
     """
 
     def inner(*args, **kwargs):
-        with sqlite3.connect('cinemator.db') as conn:
-            res = func(*args, conn=conn, **kwargs)
+        with sqlite3.connect('cinemator.db') as conn:   # Open connection to the database
+            res = func(*args, conn=conn, **kwargs)  # Pass the connection to the function
         return res
 
     return inner
@@ -22,24 +23,26 @@ def ensure_connection(func):
 
 @ensure_connection
 def init_db(conn, force: bool = False):
-    c = conn.cursor()
+    """
+    Initializes the database by creating necessary tables.
+
+    Args:
+        conn: The SQLite database connection.
+        force: A boolean flag indicating whether to drop existing tables before
+               creating new ones. Defaults to False.
+    """
+
+    c = conn.cursor()  # Create a cursor object for executing SQL commands
 
     if force:
-        #        c.execute('DROP TABLE IF EXISTS user_message')
+        # Optionally drop existing tables
         c.execute('DROP TABLE IF EXISTS users')
         c.execute('DROP TABLE IF EXISTS favorite_movies')
         c.execute('DROP TABLE IF EXISTS movies_to_watch')
         c.execute('DROP TABLE IF EXISTS user_favorite_movies')
         c.execute('DROP TABLE IF EXISTS user_movies_to_watch')
 
-    #     c.execute('''
-    #         CREATE TABLE IF NOT EXISTS user_message (
-    #             id INTEGER PRIMARY KEY,
-    #             user_id INTEGER NOT NULL,
-    #             text TEXT NOT NULL
-    #         )
-    # ''')
-
+    # Create users table
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
@@ -48,6 +51,7 @@ def init_db(conn, force: bool = False):
         )
     ''')
 
+    # Create favorite_movies table
     c.execute('''
         CREATE TABLE IF NOT EXISTS favorite_movies (
             movie_id INTEGER PRIMARY KEY,
@@ -59,6 +63,7 @@ def init_db(conn, force: bool = False):
         )
     ''')
 
+    # Create movies_to_watch table
     c.execute('''
         CREATE TABLE IF NOT EXISTS movies_to_watch (
             movie_id INTEGER PRIMARY KEY,
@@ -70,6 +75,7 @@ def init_db(conn, force: bool = False):
         )
     ''')
 
+    # Create user_favorite_movies table
     c.execute('''
         CREATE TABLE IF NOT EXISTS user_favorite_movies (
             user_id INTEGER,
@@ -80,6 +86,7 @@ def init_db(conn, force: bool = False):
         )
     ''')
 
+    # Create user_movies_to_watch table
     c.execute('''
         CREATE TABLE IF NOT EXISTS user_movies_to_watch (
             user_id INTEGER,
@@ -90,13 +97,30 @@ def init_db(conn, force: bool = False):
         )
     ''')
 
-    conn.commit()
+    conn.commit()  # Commit the transaction to save changes to the database
 
 
 @ensure_connection
 def add_movie_to_watch(conn, user_id, title, description, year, genre, rating):
+    """
+    Adds a movie to the user's "To Watch" list.
+
+    Args:
+        conn: The SQLite database connection.
+        user_id: The ID of the user adding the movie.
+        title: The title of the movie.
+        description: A brief description of the movie.
+        year: The release year of the movie.
+        genre: The genre of the movie.
+        rating: The movie's rating.
+
+    Returns:
+        True if the movie was added successfully, False otherwise.
+    """
+
     c = conn.cursor()
 
+    # Check if the movie is already in the user's "To Watch" list
     c.execute('''
         SELECT 1 FROM user_movies_to_watch WHERE user_id = ? AND EXISTS (
             SELECT 1 FROM movies_to_watch WHERE title = ?
@@ -104,30 +128,47 @@ def add_movie_to_watch(conn, user_id, title, description, year, genre, rating):
     ''', (user_id, title))
 
     if c.fetchone():
-        print('Фильм уже добавлен в список "Смотреть позже" для этого пользователя.')
+        print('The movie is already in the "To Watch" list for this user.')
         return False
 
-        # Добавляем фильм в таблицу favorite_movies
+    # Add the movie to the movies_to_watch table
     c.execute('INSERT INTO movies_to_watch (title, description, year, genre, rating) VALUES (?, ?, ?, ?, ?)',
               (title, description, year, genre, rating))
     conn.commit()
 
-    # Получаем идентификатор фильма, который только что добавили
+    # Get the ID of the movie that was just added
     movie_id = c.lastrowid
 
-    # Затем создаем связь между пользователем и фильмом в таблице user_favorite_movies
+    # Create a link between the user and the movie in the user_movies_to_watch table
     c.execute('INSERT INTO user_movies_to_watch (user_id, movie_id) VALUES (?, ?)',
               (user_id, movie_id))
     conn.commit()
 
-    print("Фильм успешно добавлен в список любимых для этого пользователя.")
+    print("The movie has been successfully added to the 'To Watch' list for this user.")
     return True
+
 
 @ensure_connection
 def add_favorite_movie(conn, user_id, title, description, year, genre, rating):
+    """
+    Adds a movie to the user's favorites list.
+
+    Args:
+        conn: The SQLite database connection.
+        user_id: The ID of the user adding the movie.
+        title: The title of the movie.
+        description: A brief description of the movie.
+        year: The release year of the movie.
+        genre: The genre of the movie.
+        rating: The movie's rating.
+
+    Returns:
+        True if the movie was added successfully, False otherwise.
+    """
+
     c = conn.cursor()
 
-    # Проверяем, есть ли уже такой фильм в списке любимых для данного пользователя
+    # Check if the movie is already in the user's favorites
     c.execute('''
         SELECT 1 FROM user_favorite_movies WHERE user_id = ? AND EXISTS (
             SELECT 1 FROM favorite_movies WHERE title = ?
@@ -135,30 +176,44 @@ def add_favorite_movie(conn, user_id, title, description, year, genre, rating):
     ''', (user_id, title))
 
     if c.fetchone():
-        print("Фильм уже добавлен в список любимых для этого пользователя.")
+        print("The movie is already in the favorites list for this user.")
         return False
 
-    # Добавляем фильм в таблицу favorite_movies
+    # Add the movie to the favorite_movies table
     c.execute('INSERT INTO favorite_movies (title, description, year, genre, rating) VALUES (?, ?, ?, ?, ?)',
               (title, description, year, genre, rating))
     conn.commit()
 
-    # Получаем идентификатор фильма, который только что добавили
+
+    # Get the ID of the movie that was just added
     movie_id = c.lastrowid
 
-    # Затем создаем связь между пользователем и фильмом в таблице user_favorite_movies
+    # Create a link between the user and the movie in the user_favorite_movies table
     c.execute('INSERT INTO user_favorite_movies (user_id, movie_id) VALUES (?, ?)',
               (user_id, movie_id))
     conn.commit()
 
-    print("Фильм успешно добавлен в список любимых для этого пользователя.")
+    print("The movie has been successfully added to the favorites list for this user.")
     return True
+
 
 @ensure_connection
 def del_movie_to_watch(conn, user_id, movie_id):
+    """
+    Deletes a movie from the user's "To Watch" list.
+
+    Args:
+        conn: The SQLite database connection.
+        user_id: The ID of the user removing the movie.
+        movie_id: The ID of the movie to remove.
+
+    Returns:
+        True if the movie was removed successfully, False otherwise.
+    """
+
     c = conn.cursor()
 
-    # Проверяем, существует ли фильм в списке "Смотреть позже" для данного пользователя
+    # Check if the movie exists in the user's "To Watch" list
     c.execute('''
         SELECT 1 FROM user_movies_to_watch WHERE user_id = ? AND EXISTS (
             SELECT 1 FROM movies_to_watch WHERE movie_id = ?
@@ -166,22 +221,34 @@ def del_movie_to_watch(conn, user_id, movie_id):
     ''', (user_id, movie_id))
 
     if not c.fetchone():
-        print("Такого фильма нет в вашем списке 'Смотреть позже'!")
+        print("The movie is not in your 'To Watch' list!")
         return False
 
-    # Удаляем связь между пользователем и фильмом в таблице user_movies_to_watch
+    # Delete the link between the user and the movie in the user_movies_to_watch table
     c.execute('DELETE FROM user_movies_to_watch WHERE user_id = ? AND movie_id = ?', (user_id, movie_id))
     conn.commit()
 
-    print("Фильм успешно удален из вашего списка 'Смотреть позже'.")
+    print("The movie has been successfully removed from your 'To Watch' list.")
     return True
 
 
 @ensure_connection
 def del_favorite_movies(conn, user_id, movie_id):
+    """
+    Deletes a movie from the user's favorites list.
+
+    Args:
+        conn: The SQLite database connection.
+        user_id: The ID of the user removing the movie.
+        movie_id: The ID of the movie to remove.
+
+    Returns:
+        True if the movie was removed successfully, False otherwise.
+    """
+
     c = conn.cursor()
 
-    # Проверяем, существует ли фильм в списке "Смотреть позже" для данного пользователя
+    # Check if the movie exists in the user's favorites
     c.execute('''
         SELECT 1 FROM user_favorite_movies WHERE user_id = ? AND EXISTS (
             SELECT 1 FROM favorite_movies WHERE movie_id = ?
@@ -189,18 +256,32 @@ def del_favorite_movies(conn, user_id, movie_id):
     ''', (user_id, movie_id))
 
     if not c.fetchone():
-        print("Такого фильма нет в вашем списке 'Избранные фильмы'!")
+        print("The movie is not in your favorites list!")
         return False
 
-    # Удаляем связь между пользователем и фильмом в таблице user_movies_to_watch
+    # Delete the link between the user and the movie in the user_favorite_movies table
     c.execute('DELETE FROM user_favorite_movies WHERE user_id = ? AND movie_id = ?', (user_id, movie_id))
     conn.commit()
 
-    print("Фильм успешно удален из вашего списка 'Избранные фильмы'.")
+    print("The movie has been successfully removed from your favorites list.")
     return True
+
 
 @ensure_connection
 def get_movies_to_watch(conn, user_id, limit=1, offset=0):
+    """
+    Retrieves movies from the user's "To Watch" list.
+
+    Args:
+        conn: The SQLite database connection.
+        user_id: The ID of the user retrieving movies.
+        limit: The maximum number of movies to retrieve.
+        offset: The number of movies to skip before starting to retrieve.
+
+    Returns:
+        A list of movies in the user's "To Watch" list.
+    """
+
     c = conn.cursor()
     c.execute('''
         SELECT um.movie_id, m.title, m.description, m.year, m.genre, m.rating
@@ -215,6 +296,19 @@ def get_movies_to_watch(conn, user_id, limit=1, offset=0):
 
 @ensure_connection
 def get_favorite_movies(conn, user_id, limit=1, offset=0):
+    """
+    Retrieves movies from the user's favorites list.
+
+    Args:
+        conn: The SQLite database connection.
+        user_id: The ID of the user retrieving movies.
+        limit: The maximum number of movies to retrieve.
+        offset: The number of movies to skip before starting to retrieve.
+
+    Returns:
+        A list of movies in the user's favorites list.
+    """
+
     c = conn.cursor()
     c.execute('''
         SELECT um.movie_id, m.title, m.description, m.year, m.genre, m.rating
@@ -227,26 +321,23 @@ def get_favorite_movies(conn, user_id, limit=1, offset=0):
     return c.fetchall()
 
 
-
 if __name__ == '__main__':
-    init_db()  # Проверка, есть ли база
+    init_db()
 
-    #TODO: ниже наполняем тестовыми данными. Удалить потом при выкате в прод.
-    add_favorite_movie(
-        user_id=444123456,
-        title='Тестовый любимый фильм22222',
-        description='Тестовое описание2222',
-        year=1111,
-        genre='Тестовый жанр2222',
-        rating=3
-    )
-
-
-    add_movie_to_watch(
-        user_id=123456,
-        title='Тестовый любимый фильм2',
-        description='Тестовое описание2',
-        year=4121,
-        genre='Тестовый жанр2',
-        rating=3
-    )
+    # add_favorite_movie(
+    #     user_id=444123456,
+    #     title='Тестовый любимый фильм22222',
+    #     description='Тестовое описание2222',
+    #     year=1111,
+    #     genre='Тестовый жанр2222',
+    #     rating=3
+    # )
+    #
+    # add_movie_to_watch(
+    #     user_id=123456,
+    #     title='Тестовый любимый фильм2',
+    #     description='Тестовое описание2',
+    #     year=4121,
+    #     genre='Тестовый жанр2',
+    #     rating=3
+    # )
